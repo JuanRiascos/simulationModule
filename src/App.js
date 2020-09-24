@@ -4,6 +4,7 @@ import { XYPlot, VerticalBarSeries, XAxis, YAxis, VerticalGridLines, HorizontalG
 import Caps from './Caps'
 import Interiors from './Interiors'
 import Product from './Product'
+import { Card, Col, Layout, Row } from 'antd'
 const { jStat } = require('jstat')
 
 const tapas = new Caps()
@@ -48,44 +49,6 @@ function App() {
 			}
 		}
 
-		for (let i = 0; i < product.finalProduct.length; i++) {
-
-			const dayTop = tapas.caps[product.finalProduct[i].topCap].arrivalTime.day
-			let minuteTop = 0
-			if (dayTop == 1)
-				minuteTop = tapas.caps[product.finalProduct[i].topCap].arrivalTime.minute
-			else
-				minuteTop = (dayTop - 1) * workingTime + tapas.caps[product.finalProduct[i].topCap].arrivalTime.minute
-
-
-			const dayLower = tapas.caps[product.finalProduct[i].lowerCap].arrivalTime.day
-			let minuteLower = 0
-			if (dayLower == 1)
-				minuteLower = tapas.caps[product.finalProduct[i].lowerCap].arrivalTime.minute
-			else
-				minuteLower = (dayLower - 1) * workingTime + tapas.caps[product.finalProduct[i].lowerCap].arrivalTime.minute
-
-
-			const dayInterior = interiors.interiors[product.finalProduct[i].interior].arrivalTime.day
-			let minuteInterior = 0
-			if (dayInterior == 1)
-				minuteInterior = interiors.interiors[product.finalProduct[i].interior].arrivalTime.minute
-			else
-				minuteInterior = (dayInterior - 1) * workingTime + interiors.interiors[product.finalProduct[i].interior].arrivalTime.minute
-
-			const less = Math.min(minuteTop, minuteLower, minuteInterior)
-
-			const creationDay = product.finalProduct[i].creationTime.day
-			let creationMinute = 0
-			if (creationDay == 1)
-				creationMinute = product.finalProduct[i].creationTime.minute
-			else
-				creationMinute = ((creationDay - 1) * workingTime + product.finalProduct[i].creationTime.minute)
-
-			product.finalProduct[i].totalTime = creationMinute - less
-
-		}
-
 		let mediaData = []
 		let totalData = []
 		for (const product2 of product.finalProduct) {
@@ -103,7 +66,8 @@ function App() {
 			mediaData[i].y /= totalData[i].y
 		}
 
-		let tops = 0, lowers = 0
+		let tops = 0,
+			lowers = 0
 		for (const cap of tapas.caps) {
 			if (cap.type == 'Superior') tops++
 			else lowers++
@@ -117,7 +81,7 @@ function App() {
 		setTopCaps(tops)
 		setLowerCaps(lowers)
 
-		const data = totalData.map(item => item.y)
+		const data = totalData.map((item) => item.y)
 
 		setGraphMedia(mediaData)
 		setGraphTotal(totalData)
@@ -128,58 +92,83 @@ function App() {
 		setVarianza(jStat.variance(data))
 		setMin(Math.min(...data))
 		setMax(Math.max(...data))
-
 	}
 
 	const yTotal = graphTotal.reduce(
 		(res, row) => {
 			return {
 				max: Math.max(res.max, row.y),
-				min: Math.min(res.min, row.y)
-			};
+				min: Math.min(res.min, row.y),
+			}
 		},
 		{ max: -Infinity, min: Infinity }
 	)
 
-	const BarSeries = VerticalBarSeries;
+	const BarSeries = VerticalBarSeries
 
 	return (
-		<div className='App'>
-			<p>Tapas llegadas: {capsEntry.length}</p>
-			<p>Tapas superiores: {topCaps}</p>
-			<p>Tapas inferiores: {lowerCaps}</p>
-			<p>Paquetes de interiores llegados: {interiorsEntry.length}</p>
-			<p>Interiores buenos: {totalInteriors.length}</p>
-			<p>Interiores malos (chatarra): {totalScrap.length}</p>
-			<p>Productos terminados: {totalProducts.length}</p>
-			<div style={{ display: 'flex', flexDirection: 'row', marginTop: 100 }}>
-				<div>
-					<p>Total de productos por día</p>
-					<XYPlot
-						margin={{ left: 75 }}
-						width={600}
-						height={300}
-						yDomain={[0, yTotal.max]}
-						stackBy="y"
-					>
-						<VerticalGridLines />
-						<HorizontalGridLines />
-						<XAxis />
-						<YAxis />
-						<BarSeries className="vertical-bar-series-example" data={graphTotal} />
-					</XYPlot>
+		<Layout className='content'>
+			<Row>
+				<Card bordered className='card'>
+					<div className='card__body'>
+						<div>
+							<p>Tapas llegadas: {capsEntry.length}</p>
+							<p>Tapas superiores: {topCaps}</p>
+							<p>Tapas inferiores: {lowerCaps}</p>
+						</div>
+						<div>
+							<p>Paquetes de interiores llegados: {interiorsEntry.length}</p>
+							<p>Interiores buenos: {totalInteriors.length}</p>
+							<p>Interiores malos (chatarra): {totalScrap.length}</p>
+						</div>
+						<div className='card__productFinished'>
+							<p>Productos terminados: {totalProducts.length}</p>
+						</div>
+					</div>
+				</Card>
+
+				<div style={{ display: 'flex', flexDirection: 'row', marginTop: 100 }}>
+					<div>
+						<p className='title'>Total de productos por día</p>
+						<Card className='card card--graph'>
+							<XYPlot margin={{ left: 75 }} width={600} height={300} yDomain={[0, yTotal.max]} stackBy='y'>
+								<VerticalGridLines />
+								<HorizontalGridLines />
+								<BarSeries className='vertical-bar-series-example' data={graphTotal} />
+								<XAxis />
+								<YAxis />
+							</XYPlot>
+						</Card>
+					</div>
+					<div className='other'>
+						<div style={{ marginRight: 20 }}>
+							<p>Mínimo:</p>
+							<p>Máximo:</p>
+							<p>Media:</p>
+							<p>Mediana:</p>
+							<p>Moda:</p>
+							<p>Rango:</p>
+							<p>Varianza:</p>
+						</div>
+						<div span='12'>
+							<strong>{min}</strong>
+
+							<strong>{max}</strong>
+
+							<strong>{media?.toFixed(2)}</strong>
+
+							<strong>{mediana}</strong>
+
+							<strong>{moda?.length ? moda.join(', ') : moda}</strong>
+
+							<strong>{rango}</strong>
+
+							<strong>{varianza?.toFixed(2)}</strong>
+						</div>
+					</div>
 				</div>
-				<div style={{ marginLeft: 30 }}>
-					<p>Mínimo: {min}</p>
-					<p>Máximo: {max}</p>
-					<p>Media: {media?.toFixed(2)}</p>
-					<p>Mediana: {mediana}</p>
-					<p>Moda: {moda?.length ? moda.join(', ') : moda}</p>
-					<p>Rango: {rango}</p>
-					<p>Varianza: {varianza?.toFixed(2)}</p>
-				</div>
-			</div>
-		</div>
+			</Row>
+		</Layout>
 	)
 }
 
